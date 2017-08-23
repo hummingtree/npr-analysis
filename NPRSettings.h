@@ -23,6 +23,11 @@ struct NPRSettings
     std::vector<int> confs;
     std::array<int, 4> mom1;
     std::array<int, 4> mom2;
+
+// added by Jackson
+	std::array<double, 4> cont_mom1;
+	std::array<double, 4> cont_mom2;
+	
     std::array<int, 4> Ls;
     Scheme scheme;
     Parity parity;
@@ -40,17 +45,20 @@ struct NPRSettings
     }
 
     double p1[4], p2[4], q[4];
+    double cont_p1[4], cont_p2[4], cont_q[4];
     double qsq;
     void SetMomenta() {
         double p1sq, p2sq;
         p1sq = p2sq = qsq = 0;
         for (int mu = 0; mu < 4; ++mu) {
-	    p1[mu] = 2 * PI * mom1[mu] / Ls[mu];
-	    p2[mu] = 2 * PI * mom2[mu] / Ls[mu];
-	    q[mu] = p1[mu] - p2[mu];
-            p1sq += p1[mu] * p1[mu];
-            p2sq += p2[mu] * p2[mu];
-	    qsq += q[mu] * q[mu];
+	   		p1[mu] = 2 * PI * mom1[mu] / Ls[mu];
+	    	p2[mu] = 2 * PI * mom2[mu] / Ls[mu];
+	    	cont_p1[mu] = 2 * PI * cont_mom1[mu] / Ls[mu];
+	    	cont_p2[mu] = 2 * PI * cont_mom2[mu] / Ls[mu];
+	    	q[mu] = p1[mu] - p2[mu];
+        	p1sq += p1[mu] * p1[mu];
+        	p2sq += p2[mu] * p2[mu];
+	    	qsq += q[mu] * q[mu];
         }
         assert(abs(p1sq - p2sq) < 1e-12);
         assert(abs(p1sq - qsq) < 1e-12);
