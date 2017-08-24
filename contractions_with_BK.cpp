@@ -17,11 +17,11 @@ std::complex<double> do_contractions_VVpAA(
 	DoubleWilsonMatrix P_gammaMu = projector_spin_color_structures[0];// using the POSITIVE parity
 	DoubleWilsonMatrix Pi_trtr = amputated_vertex; // The trace-trace structure. (4.104) in C. Kelly's thesis.
 	DoubleWilsonMatrix Pi_tr = amputated_vertex; // The trace structure.
-	Pi_tr.Swap23();
+	// Pi_tr.Swap01();
 	Pi_tr.Swap13();
 	// P_gammaMu.Swap01();
 	// P_gammaMu.Swap23();
-	return (Pi_trtr - Pi_tr).Project(P_gammaMu);
+	return 2.*(Pi_trtr - Pi_tr).Project(P_gammaMu);
 }
 
 

@@ -11,12 +11,13 @@ void run_BK()
     NPRSettings sett;
     //const char* dir = "/home/gregm/fitting/NPR/G1_NPR/data/16x32x16_b2.13_ms0.032_ml0.01/justG1_NPR_mass0.0100";
     sett.dir = "../data/24x64x16I/BK_mass0.0050";
+//	sett.dir = "../data/greg_test_24I";
     //sett.sub_dir = "/home/gregm/fitting/NPR/G1_NPR/data/16x32x16_b2.13_ms0.032_ml0.01/c1_0.0_justG1_NPR_mass0.0100";
     sett.sub_dir = sett.dir;
     sett.c1_str = "";
     for (int conf = 1000; conf <= 1101; conf += 10) sett.confs.push_back(conf);
-    sett.mom1 = {{ 1, 1, 2, 4 }}; 
-    sett.mom2 = {{ 2, 1, 2, -2 }};
+    sett.mom1 = {{ 0, 2, 2, 0 }}; 
+    sett.mom2 = {{ 2, 2, 0, 0}};
     sett.cont_mom1 = {{ -4.5, 0., 4.5, 0. }}; 
     sett.cont_mom2 = {{ 0., 4.5, 4.5, 0. }}; 
     sett.Ls = {{ 24, 24, 24, 64 }};

@@ -18,7 +18,8 @@ all:
 else
 
 CXX = g++
-CXXFLAGS = -O2 -fno-strict-aliasing -std=c++11 -Wall -Wmissing-braces -Werror -fopenmp
+#CXXFLAGS = -O2 -fno-strict-aliasing -std=c++11 -Wall -Wmissing-braces -Werror -fopenmp
+CXXFLAGS = -O2 -fno-strict-aliasing -std=c++11 -Wall -Wmissing-braces -fopenmp
 #CXXFLAGS = -g -fno-strict-aliasing -std=c++11 -Wall -Wmissing-braces -Werror -fopenmp 
 
 all: $(OBJS)

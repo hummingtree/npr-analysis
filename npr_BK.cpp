@@ -24,8 +24,10 @@ static void compute_external_legs_jackknife(
     printf("loading external legs...\n");
     char prop1_format[512];
     char prop2_format[512];
-    sprintf(prop1_format, "%s/rev_external_leg_p%.3f_%.3f_%.3f_%.3f_traj%%d.dat", sett.dir, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3]);
+	sprintf(prop1_format, "%s/rev_external_leg_p%.3f_%.3f_%.3f_%.3f_traj%%d.dat", sett.dir, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3]);
 	sprintf(prop2_format, "%s/external_leg_p%.3f_%.3f_%.3f_%.3f_traj%%d.dat", sett.dir, sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
+//	sprintf(prop1_format, "%s/external_leg_p%d_%d_%d_%d_traj%%d.dat", sett.dir, sett.mom1[0], sett.mom1[1], sett.mom1[2], sett.mom1[3]);
+//	sprintf(prop2_format, "%s/external_leg_p%d_%d_%d_%d_traj%%d.dat", sett.dir, sett.mom2[0], sett.mom2[1], sett.mom2[2], sett.mom2[3]);
 
     ConfSampleDatabase<WilsonMatrix> prop1_db = ConfSampleDatabase<WilsonMatrix>::LoadBinned(BinningWilsonMatrixLoader(prop1_format), sett.confs, sett.bin_size);
     ConfSampleDatabase<WilsonMatrix> prop2_db = ConfSampleDatabase<WilsonMatrix>::LoadBinned(BinningWilsonMatrixLoader(prop2_format), sett.confs, sett.bin_size);
@@ -59,7 +61,14 @@ static JackknifeDatabase<DoubleWilsonMatrix> compute_amputated_VVpAA_vertex(
 		    sprintf(fourq_diagram_format, "%s/fourq_VV%s_pa%.3f_%.3f_%.3f_%.3f_pb%.3f_%.3f_%.3f_%.3f_traj%%d.bin",
 		        sett.sub_dir, sett.c1_str, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
 				sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
+//			sprintf(fourq_diagram_format, "%s/fourq_fully_connected_color_diag_V_V%s_pa%d_%d_%d_%d_pb%d_%d_%d_%d_traj%%d.bin",
+//		        sett.sub_dir, sett.c1_str, sett.mom1[0], sett.mom1[1], sett.mom1[2], sett.mom1[3], 
+//				sett.mom2[0], sett.mom2[1], sett.mom2[2], sett.mom2[3]);
 		} else {
+//			sprintf(fourq_diagram_format, "%s/fourq_fully_connected_color_diag_A_A%s_pa%d_%d_%d_%d_pb%d_%d_%d_%d_traj%%d.bin",
+//		        sett.sub_dir, sett.c1_str, sett.mom1[0], sett.mom1[1], sett.mom1[2], sett.mom1[3], 
+//				sett.mom2[0], sett.mom2[1], sett.mom2[2], sett.mom2[3]);
+
 		    sprintf(fourq_diagram_format, "%s/fourq_AA%s_pa%.3f_%.3f_%.3f_%.3f_pb%.3f_%.3f_%.3f_%.3f_traj%%d.bin",
 		        sett.sub_dir, sett.c1_str, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
 				sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
@@ -102,11 +111,19 @@ static JackknifeDatabase<complex<double>> compute_projected_VVpAA_vertex( // pro
 
 		complex<double> projected_VVpAA_vertex; 
 	
-		std::array<DoubleWilsonMatrix, 7> pscs = BuildQslashProjectorSpinColorStructures(sett.cont_q, sett.cont_qsq, sett.parity);
-
 		// TODO:currently only the GammaMu scheme
-		projected_VVpAA_vertex = 
-			contrations_with_BK::do_contractions_VVpAA(amputated_VVpAA_vertex, pscs);
+		if(sett.scheme == SchemeGammaMu){
+			std::array<DoubleWilsonMatrix, 7> gammaMu_pscs = 
+				BuildProjectorSpinColorStructures(sett.parity); // for qslash scheme. seems redundant but have to b/c of cont_q		
+			projected_VVpAA_vertex = 
+				contrations_with_BK::do_contractions_VVpAA(amputated_VVpAA_vertex, gammaMu_pscs);
+			projected_VVpAA_vertex = projected_VVpAA_vertex / 3072.;
+		}else{
+			std::array<DoubleWilsonMatrix, 7> qslash_pscs = 
+				BuildQslashProjectorSpinColorStructures(sett.cont_q, sett.cont_qsq, sett.parity); // for qslash scheme. seems redundant but have to b/c of cont_q
+			projected_VVpAA_vertex = 
+				contrations_with_BK::do_contractions_VVpAA(amputated_VVpAA_vertex, qslash_pscs);
+		}
 
 		jack_projected_VVpAA_vertex[jack] = projected_VVpAA_vertex;
     }
@@ -164,6 +181,9 @@ static void build_VA_vertex(
 	jack_projected_V_vertex.Resize(sett.Njack);
 	jack_projected_A_vertex.Resize(sett.Njack);
 
+	// TODO: qslash!!!
+	SpinMatrix cont_qslash = SpinMatrix::Slash(sett.cont_q);
+
 #pragma omp parallel for
     for (int jack = 0; jack < sett.Njack; ++jack) {
 		const vector<int> &sample = sett.jackknife_samples[jack];
@@ -179,7 +199,10 @@ static void build_VA_vertex(
 				jack_projected_A_vertex[jack] += (Amputate(unamputated_A_db[mu].MeanOnSample(sample), prop1, prop2) * SpinMatrix::Gamma5() * SpinMatrix::Gamma(mu)).Trace() / 48.;
 			}else{
 				// TODO: Implement Qslash scheme
-				assert(false);
+				jack_projected_V_vertex[jack] += (Amputate(unamputated_V_db[mu].MeanOnSample(sample), prop1, prop2) 
+													* cont_qslash).Trace() * sett.cont_q[mu]/ (12.*sett.cont_qsq);
+				jack_projected_A_vertex[jack] += (Amputate(unamputated_A_db[mu].MeanOnSample(sample), prop1, prop2) 
+													* SpinMatrix::Gamma5() * cont_qslash).Trace() * sett.cont_q[mu] / (12.*sett.cont_qsq);
 			}
 		}
     }
