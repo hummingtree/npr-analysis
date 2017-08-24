@@ -47,18 +47,21 @@ struct NPRSettings
     double p1[4], p2[4], q[4];
     double cont_p1[4], cont_p2[4], cont_q[4];
     double qsq;
+    double cont_qsq;
     void SetMomenta() {
         double p1sq, p2sq;
-        p1sq = p2sq = qsq = 0;
+        p1sq = p2sq = qsq = cont_qsq = 0;
         for (int mu = 0; mu < 4; ++mu) {
 	   		p1[mu] = 2 * PI * mom1[mu] / Ls[mu];
 	    	p2[mu] = 2 * PI * mom2[mu] / Ls[mu];
 	    	cont_p1[mu] = 2 * PI * cont_mom1[mu] / Ls[mu];
 	    	cont_p2[mu] = 2 * PI * cont_mom2[mu] / Ls[mu];
 	    	q[mu] = p1[mu] - p2[mu];
+	    	cont_q[mu] = cont_p1[mu] - cont_p2[mu];
         	p1sq += p1[mu] * p1[mu];
         	p2sq += p2[mu] * p2[mu];
 	    	qsq += q[mu] * q[mu];
+	    	cont_qsq += cont_q[mu] * cont_q[mu];
         }
         assert(abs(p1sq - p2sq) < 1e-12);
         assert(abs(p1sq - qsq) < 1e-12);
@@ -129,7 +132,7 @@ struct NPRSettings
     void Init() {
         SetJackknifeSamples();
         SetMomenta();
-        InitScheme();
+		InitScheme();
         SetSubtractionOperators();
         Show();
     }

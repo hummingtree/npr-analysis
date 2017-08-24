@@ -5,7 +5,9 @@
 #include "NPR_Utils.h"
 #include "A0.h"
 
-#include "contrations_with_BK.h"
+#include "contractions_with_BK.h"
+
+#include <cassert>
 
 using namespace std;
 
@@ -23,7 +25,7 @@ static void compute_external_legs_jackknife(
     char prop1_format[512];
     char prop2_format[512];
     sprintf(prop1_format, "%s/rev_external_leg_p%.3f_%.3f_%.3f_%.3f_traj%%d.dat", sett.dir, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3]);
-    sprintf(prop2_format, "%s/external_leg_p%.3f_%.3f_%.3f_%.3f_traj%%d.dat", sett.dir, sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
+	sprintf(prop2_format, "%s/external_leg_p%.3f_%.3f_%.3f_%.3f_traj%%d.dat", sett.dir, sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
 
     ConfSampleDatabase<WilsonMatrix> prop1_db = ConfSampleDatabase<WilsonMatrix>::LoadBinned(BinningWilsonMatrixLoader(prop1_format), sett.confs, sett.bin_size);
     ConfSampleDatabase<WilsonMatrix> prop2_db = ConfSampleDatabase<WilsonMatrix>::LoadBinned(BinningWilsonMatrixLoader(prop2_format), sett.confs, sett.bin_size);
@@ -99,10 +101,12 @@ static JackknifeDatabase<complex<double>> compute_projected_VVpAA_vertex( // pro
 		const DoubleWilsonMatrix &amputated_VVpAA_vertex = jack_amputated_VVpAA_vertex[jack];
 
 		complex<double> projected_VVpAA_vertex; 
-		
+	
+		std::array<DoubleWilsonMatrix, 7> pscs = BuildQslashProjectorSpinColorStructures(sett.cont_q, sett.cont_qsq, sett.parity);
+
 		// TODO:currently only the GammaMu scheme
 		projected_VVpAA_vertex = 
-			contrations_with_BK::do_contractions_VVpAA(amputated_VVpAA_vertex, sett.projector_spin_color_structures);
+			contrations_with_BK::do_contractions_VVpAA(amputated_VVpAA_vertex, pscs);
 
 		jack_projected_VVpAA_vertex[jack] = projected_VVpAA_vertex;
     }
@@ -115,8 +119,6 @@ static void build_VVpAA_vertex( // projected and amputated VVpAA vertex
     JackknifeDatabase<complex<double>> &jack_projected_VVpAA_vertex,
     NPRSettings &sett)
 {
-    sett.Init();
-
     // Compute external legs
     JackknifeDatabase<WilsonMatrix> jack_prop1, jack_prop2;
     compute_external_legs_jackknife(jack_prop1, jack_prop2, sett);
@@ -129,11 +131,10 @@ static void build_VVpAA_vertex( // projected and amputated VVpAA vertex
 }
 
 static void build_VA_vertex(
-	JackknifeDatabase<complex<double>> &jack_projected_VA_vertex,
+	JackknifeDatabase<complex<double>> &jack_projected_V_vertex,
+	JackknifeDatabase<complex<double>> &jack_projected_A_vertex,
 	NPRSettings &sett)
 {
-	sett.Init();
-
 	// Compute external legs
 	JackknifeDatabase<WilsonMatrix> jack_prop1, jack_prop2;
 	compute_external_legs_jackknife(jack_prop1, jack_prop2, sett);
@@ -148,10 +149,10 @@ static void build_VA_vertex(
 		char A_format[512];
 
 		sprintf(V_format, "%s/twoq_gamma%d_pa%.3f_%.3f_%.3f_%.3f_pb%.3f_%.3f_%.3f_%.3f_traj%%d.dat",
-				sett.sub_dir, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
+				sett.sub_dir, mu, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
 				sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
 		sprintf(A_format, "%s/twoq_gamma%dgamma5_pa%.3f_%.3f_%.3f_%.3f_pb%.3f_%.3f_%.3f_%.3f_traj%%d.dat",
-				sett.sub_dir, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
+				sett.sub_dir, mu, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
 				sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
 	
 		unamputated_V_db[mu] = ConfSampleDatabase<WilsonMatrix>::LoadBinned(BinningWilsonMatrixLoader(V_format), sett.confs, sett.bin_size);
@@ -159,9 +160,8 @@ static void build_VA_vertex(
     }
 	
 	printf("amputating VA vertex\n");
-    JackknifeDatabase<complex<double>> jack_projected_V_vertex;
+	
 	jack_projected_V_vertex.Resize(sett.Njack);
-    JackknifeDatabase<complex<double>> jack_projected_A_vertex;
 	jack_projected_A_vertex.Resize(sett.Njack);
 
 #pragma omp parallel for
@@ -171,11 +171,16 @@ static void build_VA_vertex(
 		const WilsonMatrix &prop2 = jack_prop2[jack];
 	
 		// Amputate the two quark vertex.
-		jack_projected_V_vertex[jack].Zero();
-		jack_projected_A_vertex[jack].Zero();
+		jack_projected_V_vertex[jack] = 0.;
+		jack_projected_A_vertex[jack] = 0.;
 		for(int mu = 0; mu < 4; mu++){
-			jack_projected_V_vertex[jack] += (Amputate(unamputated_V_db[mu].MeanOnSample(sample), prop1, prop2) * SpinMatrix::Gamma(mu)).Trace();
-			jack_projected_A_vertex[jack] += (Amputate(unamputated_A_db[mu].MeanOnSample(sample), prop1, prop2) * SpinMatrix::Gamma(mu) * SpinMatrix::Gamma5()).Trace();
+			if(sett.scheme == SchemeGammaMu){
+				jack_projected_V_vertex[jack] += (Amputate(unamputated_V_db[mu].MeanOnSample(sample), prop1, prop2) * SpinMatrix::Gamma(mu)).Trace() / 48.;
+				jack_projected_A_vertex[jack] += (Amputate(unamputated_A_db[mu].MeanOnSample(sample), prop1, prop2) * SpinMatrix::Gamma5() * SpinMatrix::Gamma(mu)).Trace() / 48.;
+			}else{
+				// TODO: Implement Qslash scheme
+				assert(false);
+			}
 		}
     }
     printf("done amputating VA vertex...\n");
@@ -186,14 +191,27 @@ static void build_VA_vertex(
 
 }
 
-NPRResults npr_BK(NPRSettings &sett)
+void npr_BK(NPRSettings &sett)
 {
-	JackknifeDatabase<complex<double>> &jack_projected_VVpAA_vertex;
-	JackknifeDatabase<complex<double>> &jack_projected_VA_vertex;
+	sett.Init();
 	
+	JackknifeDatabase<complex<double>> jack_projected_VVpAA_vertex;
+//	JackknifeDatabase<complex<double>> jack_projected_BK_vertex;
+	JackknifeDatabase<complex<double>> jack_projected_V_vertex;
+	JackknifeDatabase<complex<double>> jack_projected_A_vertex;
+	
+//	jack_projected_BK_vertex.Resize(Njack);
+
 	build_VVpAA_vertex(jack_projected_VVpAA_vertex, sett);
-	build_VA_vertex()(jack_projected_VA_vertex, sett);
+	build_VA_vertex(jack_projected_V_vertex, jack_projected_A_vertex, sett);
+
+	PrintComplexWithError("VVpAA", jack_projected_VVpAA_vertex, true);
+	PrintComplexWithError("V    ", jack_projected_V_vertex, true);
+	PrintComplexWithError("A    ", jack_projected_A_vertex, true);
+
+//	printf("VVpAA: %.8f+I%.8f\n", jack_projected_VVpAA_vertex.CentralValue().real(), jack_projected_VVpAA_vertex.CentralValue().imag());
+//	printf("V:     %.8f+I%.8f\n", jack_projected_V_vertex.CentralValue().real(), jack_projected_V_vertex.CentralValue().imag());
+//	printf("A:     %.8f+I%.8f\n", jack_projected_A_vertex.CentralValue().real(), jack_projected_A_vertex..imag());
+
 }
 
-
-#endif
