@@ -22,7 +22,7 @@ void run_BK()
     sett.cont_mom2 = {{ 0., 4.5, 4.5, 0. }}; 
     sett.Ls = {{ 24, 24, 24, 64 }};
     sett.parity = POSITIVE_PARITY;
-    sett.scheme = SchemeGammaMu;
+    sett.scheme = SchemeQslash;
     sett.do_disconnected = true;
     sett.do_subtractions = true;
     sett.enforce_reality = true;

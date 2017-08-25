@@ -15,6 +15,16 @@ std::complex<double> JackknifeError(const std::vector<std::complex<double> > &ja
 class SpinMatrix;
 SpinMatrix JackknifeError(const std::vector<SpinMatrix> &jackknife_values);
 
+inline std::complex<double> central_value_no_bias (const std::vector<std::complex<double>> &dbs)
+{
+//  return this->samples[0];
+	std::complex<double> s = 0.;
+	int jack_size = dbs.size() - 1;
+	for(int jack = 1; jack < jack_size + 1; jack++){
+		s += dbs[jack];
+	}
+	return dbs[0] * (double)jack_size - s * (double)(jack_size-1.) / (double)jack_size;
+}
 
 template<class T>
 std::vector<T> JackknifeError(const std::vector<std::vector<T> > &jackknife_values)

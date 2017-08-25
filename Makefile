@@ -32,6 +32,6 @@ endif
 
 clean:
 	-rm -f $(OBJS)
-	-rm RunNPRAnalysis
+	-rm npr.x
 	
 

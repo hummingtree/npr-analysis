@@ -39,7 +39,8 @@ void PrintDoubleWithError(const char *name, const JackknifeDatabase<double> &jac
 
 void PrintComplexWithError(const char *name, const JackknifeDatabase<std::complex<double> > &jack_db, bool newline)
 {
-    std::complex<double> central = jack_db.CentralValue();
+//	std::complex<double> central = jack_db.CentralValue();
+    std::complex<double> central = central_value_no_bias(jack_db.samples);
     std::complex<double> err = jack_db.Error();
     printf("%s = %f + i %f     +/-    %f + i %f", name, central.real(), central.imag(), err.real(), err.imag());
     if (newline) printf("\n");

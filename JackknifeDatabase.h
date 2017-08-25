@@ -176,7 +176,7 @@ public:
 template<class T>
 T JackknifeDatabase<T>::CentralValue() const
 {
-    return this->samples[0];
+	return this->samples[0];
 }
 
 
