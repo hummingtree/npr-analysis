@@ -297,4 +297,29 @@ template<class T> JackknifeDatabase<T> operator-(const JackknifeDatabase<T> &a)
     return ret;
 }
 
+inline void ReadJackknifeDatabaseFromFile(JackknifeDatabase<double>& dbs, char* src, int Njack){
+	dbs.Resize(Njack);
+	char no_skip[512];
+	char with_skip[512];
+	sprintf(no_skip, "%s.dat", src);
+	sprintf(with_skip, "%s_jacks.dat", src);
+	FILE* f = NULL;
+	
+	f = fopen(no_skip, "r");
+	if(f == NULL){
+		printf("Failed to open %s\n.", no_skip);
+		exit(1);
+	}
+	fscanf(f, "%lf", &(dbs[0]));
+
+	f = fopen(with_skip, "r");
+	if(f == NULL){
+		printf("Failed to open %s\n.", with_skip);
+		exit(1);
+	}
+	for(int jack = 1; jack < Njack; jack++){
+		fscanf(f, "%lf", &(dbs[jack]));
+	}
+}
+
 #endif

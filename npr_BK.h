@@ -10,6 +10,6 @@ struct NPRResults
     JackknifeDatabase<std::complex<double>> jack_Z_BK;
 };
 
-void npr_BK(NPRSettings &sett);
+void npr_BK(NPRSettings &sett, char* BK_lat_src);
 
 #endif

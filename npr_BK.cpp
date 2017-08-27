@@ -214,7 +214,7 @@ static void build_VA_vertex(
 
 }
 
-void npr_BK(NPRSettings &sett)
+void npr_BK(NPRSettings &sett, char* BK_lat_src)
 {
 	sett.Init();
 	
@@ -228,13 +228,37 @@ void npr_BK(NPRSettings &sett)
 	build_VVpAA_vertex(jack_projected_VVpAA_vertex, sett);
 	build_VA_vertex(jack_projected_V_vertex, jack_projected_A_vertex, sett);
 
-	PrintComplexWithError("VVpAA", jack_projected_VVpAA_vertex, true);
-	PrintComplexWithError("V    ", jack_projected_V_vertex, true);
-	PrintComplexWithError("A    ", jack_projected_A_vertex, true);
+	PrintComplexWithError("VVpAA ", jack_projected_VVpAA_vertex, true);
+	PrintComplexWithError("V     ", jack_projected_V_vertex, true);
+	PrintComplexWithError("A     ", jack_projected_A_vertex, true);
+
+	JackknifeDatabase<double> jack_projected_ZBK_vertex;
+	jack_projected_ZBK_vertex.Resize(sett.Njack);
+
+	for (int jack = 0; jack < sett.Njack; ++jack) {
+		double VpAd2 = (jack_projected_V_vertex[jack].real() + jack_projected_A_vertex[jack].real()) / 2.;
+		jack_projected_ZBK_vertex[jack] = VpAd2 * VpAd2 / jack_projected_VVpAA_vertex[jack].real();
+	}
+
+	PrintDoubleWithError("ZBK   ", jack_projected_ZBK_vertex, true);
 
 //	printf("VVpAA: %.8f+I%.8f\n", jack_projected_VVpAA_vertex.CentralValue().real(), jack_projected_VVpAA_vertex.CentralValue().imag());
 //	printf("V:     %.8f+I%.8f\n", jack_projected_V_vertex.CentralValue().real(), jack_projected_V_vertex.CentralValue().imag());
 //	printf("A:     %.8f+I%.8f\n", jack_projected_A_vertex.CentralValue().real(), jack_projected_A_vertex..imag());
+	
+	if(BK_lat_src != NULL){	
+		JackknifeDatabase<double> jack_projected_BK_lat_vertex;
+		JackknifeDatabase<double> jack_projected_BK_SMOM_vertex;
+		jack_projected_BK_lat_vertex.Resize(sett.Njack);	
+		jack_projected_BK_SMOM_vertex.Resize(sett.Njack);	
+		ReadJackknifeDatabaseFromFile(jack_projected_BK_lat_vertex, BK_lat_src, sett.Njack);
+		for (int jack = 0; jack < sett.Njack; ++jack) {
+			jack_projected_BK_SMOM_vertex[jack] = jack_projected_BK_lat_vertex[jack] * jack_projected_ZBK_vertex[jack];
+		}
+		PrintDoubleWithError("BK_lat ", jack_projected_BK_lat_vertex, true);
+		PrintDoubleWithError("BK_SMOM", jack_projected_BK_SMOM_vertex, true);
+	}
+
 
 }
 
