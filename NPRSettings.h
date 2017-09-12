@@ -110,6 +110,8 @@ struct NPRSettings
         printf("Nconf = %d\n", (int)confs.size());
         printf("mom1 = (%d, %d, %d, %d)\n", mom1[0], mom1[1], mom1[2], mom1[3]);
         printf("mom2 = (%d, %d, %d, %d)\n", mom2[0], mom2[1], mom2[2], mom2[3]);
+        printf("cont_mom1 = (%.3f, %.3f, %.3f, %.3f)\n", cont_mom1[0], cont_mom1[1], cont_mom1[2], cont_mom1[3]);
+        printf("cont_mom2 = (%.3f, %.3f, %.3f, %.3f)\n", cont_mom2[0], cont_mom2[1], cont_mom2[2], cont_mom2[3]);
         printf("Ls = (%d, %d, %d, %d)\n", Ls[0], Ls[1], Ls[2], Ls[3]);
         printf("p1 = (%f, %f, %f, %f)\n", p1[0], p1[1], p1[2], p1[3]);
         printf("p2 = (%f, %f, %f, %f)\n", p2[0], p2[1], p2[2], p2[3]);

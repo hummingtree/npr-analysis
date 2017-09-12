@@ -113,8 +113,8 @@ static JackknifeDatabase<complex<double>> compute_projected_VVpAA_vertex( // pro
 	
 		// TODO:currently only the GammaMu scheme
 		if(sett.scheme == SchemeGammaMu){
-			std::array<DoubleWilsonMatrix, 7> gammaMu_pscs = 
-				BuildProjectorSpinColorStructures(sett.parity); // for qslash scheme. seems redundant but have to b/c of cont_q		
+			BK_pscs gammaMu_pscs = 
+				build_BK_gammaMu_pscs(sett.parity); // for qslash scheme. seems redundant but have to b/c of cont_q		
 			projected_VVpAA_vertex = 
 				contrations_with_BK::do_contractions_VVpAA(amputated_VVpAA_vertex, gammaMu_pscs);
 			projected_VVpAA_vertex = projected_VVpAA_vertex / 3072.;
