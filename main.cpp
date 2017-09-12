@@ -87,6 +87,11 @@ void run_BK_24ID()
     sett.bin_size = 3;
 	
     npr_BK(sett, "../data/24x64x24ID/BK_24ID");
+	
+	sett.scheme = SchemeQslash;
+
+    npr_BK(sett, "../data/24x64x24ID/BK_24ID");
+
 }
 
 int main()
@@ -112,7 +117,7 @@ int main()
     //DoStepScaling_24_32(SchemeGammaMu, SchemeGammaMu, NEGATIVE_PARITY);
     //DoStepScaling_24_32(SchemeQslash, SchemeQslash, NEGATIVE_PARITY);
 
-	run_BK_32I();
+	run_BK_24ID();
 
     return 0;
 }

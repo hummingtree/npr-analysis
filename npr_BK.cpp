@@ -77,7 +77,7 @@ static JackknifeDatabase<DoubleWilsonMatrix> compute_amputated_VVpAA_vertex(
 		    ConfSampleDatabase<DoubleWilsonMatrix>::LoadBinned(BinningDoubleWilsonMatrixLoader(fourq_diagram_format), sett.confs, sett.bin_size);
     }
     // VV + AA
-	ConfSampleDatabase<DoubleWilsonMatrix> unamputated_VVpAA_db = unamputated_VV_AND_AA_dbs[0] + unamputated_VV_AND_AA_dbs[1];
+	ConfSampleDatabase<DoubleWilsonMatrix> unamputated_VVpAA_db = unamputated_VV_AND_AA_dbs[0] - unamputated_VV_AND_AA_dbs[1];
 	
 //	MakeLeftHandedDiagrams<DoubleWilsonMatrix>(unamputated_fourq_VA_G1_dbs, sett.parity);
     
@@ -98,29 +98,25 @@ static JackknifeDatabase<DoubleWilsonMatrix> compute_amputated_VVpAA_vertex(
     return jack_amputated_VVpAA_vertex;
 }
 
-static JackknifeDatabase<complex<double>> compute_projected_VVpAA_vertex( // projected indicates the vertex is already amputated
+static JackknifeDatabase<array<complex<double>, 5>> compute_projected_VVpAA_vertex( // projected indicates the vertex is already amputated
         const JackknifeDatabase<DoubleWilsonMatrix> &jack_amputated_VVpAA_vertex,
         const NPRSettings &sett)
 {
     printf("computing projected VVpAA vertex...\n");
-    JackknifeDatabase<complex<double>> jack_projected_VVpAA_vertex;
+    JackknifeDatabase<array<complex<double>, 5>> jack_projected_VVpAA_vertex;
     jack_projected_VVpAA_vertex.Resize(sett.Njack);
 #pragma omp parallel for
     for (int jack = 0; jack < sett.Njack; ++jack) {
 		const DoubleWilsonMatrix &amputated_VVpAA_vertex = jack_amputated_VVpAA_vertex[jack];
 
-		complex<double> projected_VVpAA_vertex; 
-	
+		array<complex<double>, 5> projected_VVpAA_vertex; 
 		// TODO:currently only the GammaMu scheme
 		if(sett.scheme == SchemeGammaMu){
-			BK_pscs gammaMu_pscs = 
-				build_BK_gammaMu_pscs(sett.parity); // for qslash scheme. seems redundant but have to b/c of cont_q		
+			BK_pscs gammaMu_pscs = build_BK_gammaMu_pscs(sett.parity); // for qslash scheme. seems redundant but have to b/c of cont_q		
 			projected_VVpAA_vertex = 
 				contrations_with_BK::do_contractions_VVpAA(amputated_VVpAA_vertex, gammaMu_pscs);
-			projected_VVpAA_vertex = projected_VVpAA_vertex / 3072.;
 		}else{
-			std::array<DoubleWilsonMatrix, 7> qslash_pscs = 
-				BuildQslashProjectorSpinColorStructures(sett.cont_q, sett.cont_qsq, sett.parity); // for qslash scheme. seems redundant but have to b/c of cont_q
+			BK_pscs qslash_pscs = build_BK_Qslash_pscs(sett.cont_q, sett.cont_qsq, sett.parity); // for qslash scheme. seems redundant but have to b/c of cont_q		
 			projected_VVpAA_vertex = 
 				contrations_with_BK::do_contractions_VVpAA(amputated_VVpAA_vertex, qslash_pscs);
 		}
@@ -133,7 +129,7 @@ static JackknifeDatabase<complex<double>> compute_projected_VVpAA_vertex( // pro
 }
 
 static void build_VVpAA_vertex( // projected and amputated VVpAA vertex
-    JackknifeDatabase<complex<double>> &jack_projected_VVpAA_vertex,
+    JackknifeDatabase<array<complex<double>, 5>> &jack_projected_VVpAA_vertex,
     NPRSettings &sett)
 {
     // Compute external legs
@@ -218,7 +214,17 @@ void npr_BK(NPRSettings &sett, char* BK_lat_src)
 {
 	sett.Init();
 	
-	JackknifeDatabase<complex<double>> jack_projected_VVpAA_vertex;
+	JackknifeDatabase<array<complex<double>, 5>> jack_projected_VVpAA_vertex;
+	JackknifeDatabase<complex<double>> jack_projected_VVpAA0_vertex;
+	JackknifeDatabase<complex<double>> jack_projected_VVpAA1_vertex;
+	JackknifeDatabase<complex<double>> jack_projected_VVpAA2_vertex;
+	JackknifeDatabase<complex<double>> jack_projected_VVpAA3_vertex;
+	JackknifeDatabase<complex<double>> jack_projected_VVpAA4_vertex;
+	jack_projected_VVpAA0_vertex.Resize(sett.Njack);
+	jack_projected_VVpAA1_vertex.Resize(sett.Njack);
+	jack_projected_VVpAA2_vertex.Resize(sett.Njack);
+	jack_projected_VVpAA3_vertex.Resize(sett.Njack);
+	jack_projected_VVpAA4_vertex.Resize(sett.Njack);
 //	JackknifeDatabase<complex<double>> jack_projected_BK_vertex;
 	JackknifeDatabase<complex<double>> jack_projected_V_vertex;
 	JackknifeDatabase<complex<double>> jack_projected_A_vertex;
@@ -228,7 +234,19 @@ void npr_BK(NPRSettings &sett, char* BK_lat_src)
 	build_VVpAA_vertex(jack_projected_VVpAA_vertex, sett);
 	build_VA_vertex(jack_projected_V_vertex, jack_projected_A_vertex, sett);
 
-	PrintComplexWithError("VVpAA ", jack_projected_VVpAA_vertex, true);
+	for (int jack = 0; jack < sett.Njack; ++jack) {
+		jack_projected_VVpAA0_vertex[jack] = jack_projected_VVpAA_vertex[jack][0];
+		jack_projected_VVpAA1_vertex[jack] = jack_projected_VVpAA_vertex[jack][1];
+		jack_projected_VVpAA2_vertex[jack] = jack_projected_VVpAA_vertex[jack][2];
+		jack_projected_VVpAA3_vertex[jack] = jack_projected_VVpAA_vertex[jack][3];
+		jack_projected_VVpAA4_vertex[jack] = jack_projected_VVpAA_vertex[jack][4];
+	}
+	
+	PrintComplexWithError("VVpAA ", jack_projected_VVpAA0_vertex, true);
+	PrintComplexWithError("VVpAA1", jack_projected_VVpAA1_vertex, true);
+	PrintComplexWithError("VVpAA2", jack_projected_VVpAA2_vertex, true);
+	PrintComplexWithError("VVpAA3", jack_projected_VVpAA3_vertex, true);
+	PrintComplexWithError("VVpAA4", jack_projected_VVpAA4_vertex, true);
 	PrintComplexWithError("V     ", jack_projected_V_vertex, true);
 	PrintComplexWithError("A     ", jack_projected_A_vertex, true);
 
@@ -237,7 +255,7 @@ void npr_BK(NPRSettings &sett, char* BK_lat_src)
 
 	for (int jack = 0; jack < sett.Njack; ++jack) {
 		double VpAd2 = (jack_projected_V_vertex[jack].real() + jack_projected_A_vertex[jack].real()) / 2.;
-		jack_projected_ZBK_vertex[jack] = VpAd2 * VpAd2 / jack_projected_VVpAA_vertex[jack].real();
+		jack_projected_ZBK_vertex[jack] = VpAd2 * VpAd2 / jack_projected_VVpAA0_vertex[jack].real();
 	}
 
 	PrintDoubleWithError("ZBK   ", jack_projected_ZBK_vertex, true);

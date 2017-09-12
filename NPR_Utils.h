@@ -17,10 +17,10 @@ void TestQslashProjectors();
 
 DoubleWilsonMatrix BuildHFProjectorSpinColorStructure(Parity parity);
 
-class BK_pscs: public array<DoubleWilsonMatrix, 5> {};
+class BK_pscs: public std::array<DoubleWilsonMatrix, 5> {};
 
-BK_pscs build_BK_gammaMu_pscs();
-BK_pscs build_BK_Qslash_pscs();
+BK_pscs build_BK_gammaMu_pscs(Parity parity);
+BK_pscs build_BK_Qslash_pscs(const double q[4], double qsq, Parity parity);
 
 template<class T>
 std::array<ConfSampleDatabase<T>, 4> MakeLRDiagrams(

@@ -140,17 +140,16 @@ static DoubleWilsonMatrix build_qslash_projector_sigma(const double q[4], double
 			SpinMatrix V = SpinMatrix::Gamma(rho);
 			SpinMatrix A = SpinMatrix::GammaMuGamma5(rho);
 			SpinMatrix qslash = SpinMatrix::Slash(q);
-			SpinMatrix c = commutator(qslash, V)
-			SpinMatrix c5 = commutator(qslash, A)
+			SpinMatrix c = commutator(qslash, V);
+			SpinMatrix c5 = commutator(qslash, V) * SpinMatrix::Gamma5();
 			rtn += DoubleWilsonMatrix::Construct(c, c, color_struct)
 					+ sign * DoubleWilsonMatrix::Construct(c5, c5, color_struct);
-			return (0.125/qsq)*rtn;
 		}
     } else {
         printf("\n\n\n\nWARNING: UNTESTED NEGATIVE PARITY QSLASH PROJECTORS!!!!!!!!!!\n");
         exit(0);
-		return rtn;
     }
+	return (0.125/qsq)*rtn;
 }
 
 static DoubleWilsonMatrix BuildQslashProjectorOnePlus(const double q[4], double qsq, Parity parity)
@@ -268,14 +267,14 @@ void TestQslashProjectors()
     }
 }
 
-BK_pscs build_BK_gammaMu_pscs(NPRSettings& sett) // assuming postive parity
+BK_pscs build_BK_gammaMu_pscs(Parity parity) // assuming postive parity
 {
     DoubleWilsonMatrix VV_diag;
     DoubleWilsonMatrix AA_diag;
     DoubleWilsonMatrix SS_diag;
     DoubleWilsonMatrix PP_diag;
     DoubleWilsonMatrix TT_diag;
-   
+  
 	{   
 		SpinMatrix S = SpinMatrix::One();
 		SpinMatrix P = SpinMatrix::Gamma5();
@@ -291,7 +290,7 @@ BK_pscs build_BK_gammaMu_pscs(NPRSettings& sett) // assuming postive parity
     }
 
 	for (int mu = 0; mu < 4; ++mu) {
-	for (int nu = 0; nu < 4; ++mu) {
+	for (int nu = 0; nu < 4; ++nu) {
 		SpinMatrix T = SpinMatrix::Sigma(mu, nu);
 		TT_diag += 0.5 * DoubleWilsonMatrix::Construct(T, T, COLOR_STRUCTURE_DIAGONAL);
     }}
@@ -306,25 +305,25 @@ BK_pscs build_BK_gammaMu_pscs(NPRSettings& sett) // assuming postive parity
     // The spin - color structure for the seven projectors used in the DeltaS = 1 NPR
     // These are defined in https://rbc.phys.columbia.edu/rbc_ukqcd/individual_postings/qliu/2011/k2pipiNPR/k2pipiNPR_2.pdf
     BK_pscs projectors;
-    projectors[0] = ( VV_diag + AA_diag ) * (1./3072.);
-    projectors[1] = ( VV_diag - AA_diag ) * (1./2304.);
-    projectors[2] = ( SS_diag - PP_diag ) * (1./576.);
-    projectors[3] = ( SS_diag + PP_diag ) * (1./480.);
-    projectors[4] = ( TT_diag ) * (1./2016.);
+    projectors[0] =  (1./3072.) * ( VV_diag + AA_diag );
+    projectors[1] =  (1./2304.) * ( VV_diag - AA_diag );
+    projectors[2] = (1./576.) * ( SS_diag - PP_diag );
+    projectors[3] = (1./480.) * ( SS_diag + PP_diag );
+    projectors[4] = (1./2016.) * ( TT_diag );
     return projectors;
 }
 
-BK_pscs build_BK_Qslash_pscs(NPRSettings& sett) // assuming postive parity
+BK_pscs build_BK_Qslash_pscs(const double q[4], double qsq, Parity parity) // assuming postive parity
 {
 	assert(parity == POSITIVE_PARITY);
 
     // The spin - color structure for the seven projectors used in the DeltaS = 1 NPR
     // These are defined in https://rbc.phys.columbia.edu/rbc_ukqcd/individual_postings/qliu/2011/k2pipiNPR/k2pipiNPR_2.pdf
     BK_pscs projectors;
-    projectors[0] = BuildQslashProjector(sett.cont_q, sett.cont_qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, sett.parity) * (1./768.);
-    projectors[1] = BuildQslashProjector(sett.cont_q, sett.cont_qsq, -1.0, COLOR_STRUCTURE_DIAGONAL, sett.parity) * (1./576.);
-    projectors[2] = BuildQslashProjector(sett.cont_q, sett.cont_qsq, -1.0, COLOR_STRUCTURE_MIXED, sett.parity) * (-1./288.);
-    projectors[3] = build_qslash_projector_sigma(sett.cont_q, sett.cont_qsq, +1.0, COLOR_STRUCTURE_MIXED, sett.parity) * (1./72.);
-    projectors[4] = build_qslash_projector_sigma(sett.cont_q, sett.cont_qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, sett.parity) * (1./168.);
+    projectors[0] = (1./768.) * BuildQslashProjector(q, qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, parity); 		 
+    projectors[1] = (1./576.) * BuildQslashProjector(q, qsq, -1.0, COLOR_STRUCTURE_DIAGONAL, parity); 		 
+    projectors[2] = (-1./288.) * BuildQslashProjector(q, qsq, -1.0, COLOR_STRUCTURE_MIXED, parity); 			 
+    projectors[3] = (1./72.) * build_qslash_projector_sigma(q, qsq, +1.0, COLOR_STRUCTURE_MIXED, parity); 	 
+    projectors[4] = (1./168.) * build_qslash_projector_sigma(q, qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, parity); 
     return projectors;
 }
