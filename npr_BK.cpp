@@ -128,7 +128,13 @@ static JackknifeDatabase<array<DoubleWilsonMatrix, 5>> compute_amputated_DSeq2_v
 		jack_amputated_DSeq2_vertex[jack][2] = Amputate(unamputated_SSmPP_db.MeanOnSample(sample), prop1, prop2, prop1, prop2);
 		jack_amputated_DSeq2_vertex[jack][3] = Amputate(unamputated_SSpPP_db.MeanOnSample(sample), prop1, prop2, prop1, prop2);
 		jack_amputated_DSeq2_vertex[jack][4] = Amputate(unamputated_TT_db.MeanOnSample(sample), prop1, prop2, prop1, prop2);
-    }
+    
+//		jack_amputated_DSeq2_vertex[jack][0] = build_BK_gammaMu_pscs(POSITIVE_PARITY)[0];
+//		jack_amputated_DSeq2_vertex[jack][1] = build_BK_gammaMu_pscs(POSITIVE_PARITY)[1];
+//		jack_amputated_DSeq2_vertex[jack][2] = build_BK_gammaMu_pscs(POSITIVE_PARITY)[2];
+//		jack_amputated_DSeq2_vertex[jack][3] = build_BK_gammaMu_pscs(POSITIVE_PARITY)[3];
+//		jack_amputated_DSeq2_vertex[jack][4] = build_BK_gammaMu_pscs(POSITIVE_PARITY)[4];
+}
     printf("done amputating DSeq2 vertex...\n");
 
     return jack_amputated_DSeq2_vertex;
@@ -362,13 +368,26 @@ void npr_DSeq2(NPRSettings &sett, char* BK_lat_src)
 
 	PrintRealPartMatrixWithError("real Pi_5x5", jack_projected_DSeq2_vertex);
 
-//	JackknifeDatabase<double> jack_projected_ZBK_vertex;
-//	jack_projected_ZBK_vertex.Resize(sett.Njack);
+	JackknifeDatabase<Matrix<complex<double>, 5>> jack_DSeq2_Z;
+	jack_DSeq2_Z.Resize(sett.Njack);
+
+	JackknifeDatabase<Matrix<complex<double>, 5>> jack_DSeq2_M;
+	jack_DSeq2_M.Resize(sett.Njack);
 //
-//	for (int jack = 0; jack < sett.Njack; ++jack) {
-//		double VpAd2 = (jack_projected_V_vertex[jack].real() + jack_projected_A_vertex[jack].real()) / 2.;
-//		jack_projected_ZBK_vertex[jack] = VpAd2 * VpAd2 / jack_projected_VVpAA0_vertex[jack].real();
-//	}
+//
+	double Z_A = 0.73457; // https://rbc.phys.columbia.edu/rbc_ukqcd/individual_postings/dmurphy/coarse_ensembles/spectrum.pdf page 2
+
+	for (int jack = 0; jack < sett.Njack; ++jack) {
+		double VpAd2 = (jack_projected_V_vertex[jack].real() + jack_projected_A_vertex[jack].real()) / 2.;
+		jack_DSeq2_M[jack] = (1. / (VpAd2 * VpAd2)) * jack_projected_DSeq2_vertex[jack];
+		if(sett.scheme == SchemeGammaMu){
+			jack_DSeq2_Z[jack] = sett.tree_level_greens_funcs_DSeq2_5x5_GammaMu * jack_DSeq2_M[jack].Inverse();
+		}else{
+			jack_DSeq2_Z[jack] = sett.tree_level_greens_funcs_DSeq2_5x5_Qslash * jack_DSeq2_M[jack].Inverse();
+		}
+	}
+	
+	PrintRealPartMatrixWithError("real Z_5x5", jack_DSeq2_Z);
 //
 //	PrintDoubleWithError("ZBK   ", jack_projected_ZBK_vertex, true);
 

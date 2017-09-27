@@ -149,6 +149,7 @@ int main()
 	TestQslashProjectors();
 
 	run_DSeq2_24ID();
+	//run_BK_24ID();
 
     return 0;
 }
