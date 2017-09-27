@@ -71,7 +71,10 @@ struct NPRSettings
     static const Matrix<std::complex<double>, 8> tree_level_greens_funcs_8x8_gammamu;
     static const Matrix<std::complex<double>, 8> tree_level_greens_funcs_8x8_qslash;
     static const Matrix<std::complex<double>, 8> tree_level_greens_funcs_8x8_qslash_daiqian;
-    std::array<DoubleWilsonMatrix, 7> projector_spin_color_structures; 
+	static const Matrix<std::complex<double>, 5> tree_level_greens_funcs_DSeq2_5x5_GammaMu;
+	static const Matrix<std::complex<double>, 5> tree_level_greens_funcs_DSeq2_5x5_Qslash;
+	
+	std::array<DoubleWilsonMatrix, 7> projector_spin_color_structures; 
     DoubleWilsonMatrix HF_projector_spin_color_structure;
     Matrix<std::complex<double>, 8> tree_level_greens_funcs_8x8;
     void InitScheme() {

@@ -44,6 +44,96 @@ static void compute_external_legs_jackknife(
     printf("done external legs\n");
 }
 
+static JackknifeDatabase<array<DoubleWilsonMatrix, 5>> compute_amputated_DSeq2_vertex(
+        const JackknifeDatabase<WilsonMatrix> &jack_prop1,
+        const JackknifeDatabase<WilsonMatrix> &jack_prop2,
+        const NPRSettings &sett)
+{
+
+// VV +- AA
+    printf("loading unamputated VVpmAA vertex...\n");
+    array<ConfSampleDatabase<DoubleWilsonMatrix>, 2> unamputated_VV_AND_AA_dbs;
+    
+	for (int vvaa = 0; vvaa < 2; ++vvaa) {
+		char fourq_diagram_format[512];
+		if (vvaa == 0) {
+		    sprintf(fourq_diagram_format, "%s/fourq_VV%s_pa%.3f_%.3f_%.3f_%.3f_pb%.3f_%.3f_%.3f_%.3f_traj%%d.bin",
+		        sett.sub_dir, sett.c1_str, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
+				sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
+		} else {
+		    sprintf(fourq_diagram_format, "%s/fourq_AA%s_pa%.3f_%.3f_%.3f_%.3f_pb%.3f_%.3f_%.3f_%.3f_traj%%d.bin",
+		        sett.sub_dir, sett.c1_str, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
+				sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
+		}
+		unamputated_VV_AND_AA_dbs[vvaa] =
+		    ConfSampleDatabase<DoubleWilsonMatrix>::LoadBinned(BinningDoubleWilsonMatrixLoader(fourq_diagram_format), sett.confs, sett.bin_size);
+    }
+	ConfSampleDatabase<DoubleWilsonMatrix> unamputated_VVpAA_db = unamputated_VV_AND_AA_dbs[0] + unamputated_VV_AND_AA_dbs[1];
+	ConfSampleDatabase<DoubleWilsonMatrix> unamputated_VVmAA_db = unamputated_VV_AND_AA_dbs[0] - unamputated_VV_AND_AA_dbs[1];
+	
+// END OF VV +- AA
+
+// SS -+ PP
+
+	printf("loading unamputated SSmpPP vertex...\n");
+    array<ConfSampleDatabase<DoubleWilsonMatrix>, 2> unamputated_SS_AND_PP_dbs;
+    
+	for (int sspp = 0; sspp < 2; ++sspp) {
+		char fourq_diagram_format[512];
+		if (sspp == 0) {
+		    sprintf(fourq_diagram_format, "%s/fourq_SS%s_pa%.3f_%.3f_%.3f_%.3f_pb%.3f_%.3f_%.3f_%.3f_traj%%d.bin",
+		        sett.sub_dir, sett.c1_str, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
+				sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
+		} else {
+		    sprintf(fourq_diagram_format, "%s/fourq_PP%s_pa%.3f_%.3f_%.3f_%.3f_pb%.3f_%.3f_%.3f_%.3f_traj%%d.bin",
+		        sett.sub_dir, sett.c1_str, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
+				sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
+		}
+		unamputated_SS_AND_PP_dbs[sspp] =
+		    ConfSampleDatabase<DoubleWilsonMatrix>::LoadBinned(BinningDoubleWilsonMatrixLoader(fourq_diagram_format), sett.confs, sett.bin_size);
+    }
+	ConfSampleDatabase<DoubleWilsonMatrix> unamputated_SSpPP_db = unamputated_SS_AND_PP_dbs[0] + unamputated_SS_AND_PP_dbs[1];
+	ConfSampleDatabase<DoubleWilsonMatrix> unamputated_SSmPP_db = unamputated_SS_AND_PP_dbs[0] - unamputated_SS_AND_PP_dbs[1];
+
+// END OF SS -+ PP
+
+// TT
+
+	printf("loading unamputated TT vertex...\n");
+    //const char* gammaAs[] = { "V", "A" };
+    ConfSampleDatabase<DoubleWilsonMatrix> unamputated_TT_db;
+	
+	char fourq_diagram_format[512];
+	sprintf(fourq_diagram_format, "%s/fourq_TT%s_pa%.3f_%.3f_%.3f_%.3f_pb%.3f_%.3f_%.3f_%.3f_traj%%d.bin",
+	    sett.sub_dir, sett.c1_str, sett.cont_mom1[0], sett.cont_mom1[1], sett.cont_mom1[2], sett.cont_mom1[3], 
+		sett.cont_mom2[0], sett.cont_mom2[1], sett.cont_mom2[2], sett.cont_mom2[3]);
+	unamputated_TT_db =
+	    ConfSampleDatabase<DoubleWilsonMatrix>::LoadBinned(BinningDoubleWilsonMatrixLoader(fourq_diagram_format), sett.confs, sett.bin_size);
+
+// END OF TT
+    
+    printf("amputating DSeq2 vertices\n");
+    JackknifeDatabase<array<DoubleWilsonMatrix, 5>> jack_amputated_DSeq2_vertex;
+	jack_amputated_DSeq2_vertex.Resize(sett.Njack);	
+
+#pragma omp parallel for
+    for (int jack = 0; jack < sett.Njack; ++jack) {
+		const vector<int> &sample = sett.jackknife_samples[jack];
+		const WilsonMatrix &prop1 = jack_prop1[jack];
+		const WilsonMatrix &prop2 = jack_prop2[jack];
+	
+		// Amputate the  diagram of G1
+		jack_amputated_DSeq2_vertex[jack][0] = Amputate(unamputated_VVpAA_db.MeanOnSample(sample), prop1, prop2, prop1, prop2);
+		jack_amputated_DSeq2_vertex[jack][1] = Amputate(unamputated_VVmAA_db.MeanOnSample(sample), prop1, prop2, prop1, prop2);
+		jack_amputated_DSeq2_vertex[jack][2] = Amputate(unamputated_SSmPP_db.MeanOnSample(sample), prop1, prop2, prop1, prop2);
+		jack_amputated_DSeq2_vertex[jack][3] = Amputate(unamputated_SSpPP_db.MeanOnSample(sample), prop1, prop2, prop1, prop2);
+		jack_amputated_DSeq2_vertex[jack][4] = Amputate(unamputated_TT_db.MeanOnSample(sample), prop1, prop2, prop1, prop2);
+    }
+    printf("done amputating DSeq2 vertex...\n");
+
+    return jack_amputated_DSeq2_vertex;
+}
+
 static JackknifeDatabase<DoubleWilsonMatrix> compute_amputated_VVpAA_vertex(
         const JackknifeDatabase<WilsonMatrix> &jack_prop1,
         const JackknifeDatabase<WilsonMatrix> &jack_prop2,
@@ -128,6 +218,36 @@ static JackknifeDatabase<array<complex<double>, 5>> compute_projected_VVpAA_vert
     return jack_projected_VVpAA_vertex;
 }
 
+static JackknifeDatabase<Matrix<complex<double>, 5>> compute_projected_DSeq2_vertex( // projected indicates the vertex is already amputated
+        const JackknifeDatabase<array<DoubleWilsonMatrix, 5>> &jack_amputated_DSeq2_vertex,
+        const NPRSettings &sett)
+{
+    printf("computing projected DSeq2 vertex...\n");
+
+	JackknifeDatabase<Matrix<complex<double>, 5>> jack_projected_DSeq2_vertex;
+    jack_projected_DSeq2_vertex.Resize(sett.Njack);
+#pragma omp parallel for
+    for (int jack = 0; jack < sett.Njack; ++jack) {
+		const array<DoubleWilsonMatrix, 5> &amputated_DSeq2_vertex = jack_amputated_DSeq2_vertex[jack];
+
+		Matrix<complex<double>, 5> projected_DSeq2_vertex; 
+		if(sett.scheme == SchemeGammaMu){
+			BK_pscs gammaMu_pscs = build_BK_gammaMu_pscs(sett.parity); 		
+			projected_DSeq2_vertex = 
+				contrations_with_BK::do_contractions_DSeq2(amputated_DSeq2_vertex, gammaMu_pscs);
+		}else{
+			BK_pscs qslash_pscs = build_BK_Qslash_pscs(sett.cont_q, sett.cont_qsq, sett.parity); 		
+			projected_DSeq2_vertex = 
+				contrations_with_BK::do_contractions_DSeq2(amputated_DSeq2_vertex, qslash_pscs);
+		}
+
+		jack_projected_DSeq2_vertex[jack] = projected_DSeq2_vertex;
+    }
+    printf("done computing projected DSeq2 vertex.\n");
+
+    return jack_projected_DSeq2_vertex;
+}
+
 static void build_VVpAA_vertex( // projected and amputated VVpAA vertex
     JackknifeDatabase<array<complex<double>, 5>> &jack_projected_VVpAA_vertex,
     NPRSettings &sett)
@@ -141,6 +261,21 @@ static void build_VVpAA_vertex( // projected and amputated VVpAA vertex
 
     // Project
 	jack_projected_VVpAA_vertex = compute_projected_VVpAA_vertex(jack_amputated_VVpAA_vertex, sett);
+}
+
+static void build_DSeq2_vertex( // projected and amputated VVpAA vertex
+    JackknifeDatabase<Matrix<complex<double>, 5>> &jack_projected_DSeq2_vertex,
+    NPRSettings &sett)
+{
+    // Compute external legs
+    JackknifeDatabase<WilsonMatrix> jack_prop1, jack_prop2;
+    compute_external_legs_jackknife(jack_prop1, jack_prop2, sett);
+
+    // Load and amputate
+    JackknifeDatabase<array<DoubleWilsonMatrix, 5>> jack_amputated_DSeq2_vertex = compute_amputated_DSeq2_vertex(jack_prop1, jack_prop2, sett);
+
+    // Project
+	jack_projected_DSeq2_vertex = compute_projected_DSeq2_vertex(jack_amputated_DSeq2_vertex, sett);
 }
 
 static void build_VA_vertex(
@@ -207,6 +342,53 @@ static void build_VA_vertex(
 	// Project vertex
 	// TODO: Currently only GammaMu scheme.
 	
+
+}
+
+void npr_DSeq2(NPRSettings &sett, char* BK_lat_src)
+{
+	sett.Init();
+	
+	JackknifeDatabase<Matrix<complex<double>, 5>> jack_projected_DSeq2_vertex;
+	jack_projected_DSeq2_vertex.Resize(sett.Njack);
+	JackknifeDatabase<complex<double>> jack_projected_V_vertex;
+	JackknifeDatabase<complex<double>> jack_projected_A_vertex;
+
+	build_DSeq2_vertex(jack_projected_DSeq2_vertex, sett);
+	build_VA_vertex(jack_projected_V_vertex, jack_projected_A_vertex, sett);
+	
+	PrintComplexWithError("V     ", jack_projected_V_vertex, true);
+	PrintComplexWithError("A     ", jack_projected_A_vertex, true);
+
+	PrintRealPartMatrixWithError("real Pi_5x5", jack_projected_DSeq2_vertex);
+
+//	JackknifeDatabase<double> jack_projected_ZBK_vertex;
+//	jack_projected_ZBK_vertex.Resize(sett.Njack);
+//
+//	for (int jack = 0; jack < sett.Njack; ++jack) {
+//		double VpAd2 = (jack_projected_V_vertex[jack].real() + jack_projected_A_vertex[jack].real()) / 2.;
+//		jack_projected_ZBK_vertex[jack] = VpAd2 * VpAd2 / jack_projected_VVpAA0_vertex[jack].real();
+//	}
+//
+//	PrintDoubleWithError("ZBK   ", jack_projected_ZBK_vertex, true);
+
+//	printf("VVpAA: %.8f+I%.8f\n", jack_projected_VVpAA_vertex.CentralValue().real(), jack_projected_VVpAA_vertex.CentralValue().imag());
+//	printf("V:     %.8f+I%.8f\n", jack_projected_V_vertex.CentralValue().real(), jack_projected_V_vertex.CentralValue().imag());
+//	printf("A:     %.8f+I%.8f\n", jack_projected_A_vertex.CentralValue().real(), jack_projected_A_vertex..imag());
+	
+//	if(BK_lat_src != NULL){	
+//		JackknifeDatabase<double> jack_projected_BK_lat_vertex;
+//		JackknifeDatabase<double> jack_projected_BK_SMOM_vertex;
+//		jack_projected_BK_lat_vertex.Resize(sett.Njack);	
+//		jack_projected_BK_SMOM_vertex.Resize(sett.Njack);	
+//		ReadJackknifeDatabaseFromFile(jack_projected_BK_lat_vertex, BK_lat_src, sett.Njack);
+//		for (int jack = 0; jack < sett.Njack; ++jack) {
+//			jack_projected_BK_SMOM_vertex[jack] = jack_projected_BK_lat_vertex[jack] * jack_projected_ZBK_vertex[jack];
+//		}
+//		PrintDoubleWithError("BK_lat ", jack_projected_BK_lat_vertex, true);
+//		PrintDoubleWithError("BK_SMOM", jack_projected_BK_SMOM_vertex, true);
+//	}
+
 
 }
 

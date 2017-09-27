@@ -230,7 +230,8 @@ void TestQslashProjectors()
     DoubleWilsonMatrix P2minus = BuildQslashProjectorTwoMinus(q, qsq, parity);
 
     const vector<DoubleWilsonMatrix> basic_Ps { P1plus, P1minus, P2plus, P2minus };
-    const vector<const char*> basic_P_names { "P1plus", "P1minus", "P2plus", "P2minus" };
+    // const vector<const char*> basic_P_names { "P1plus", "P1minus", "P2plus", "P2minus" };
+    const vector<const char*> basic_P_names { "P1", "P2", "P3", "P4", "P5" };
 
     SpinMatrix qslash = SpinMatrix::Slash(q);
     SpinMatrix qslashg5 = qslash * SpinMatrix::Gamma5();
@@ -253,15 +254,24 @@ void TestQslashProjectors()
         g5g5mixed += DoubleWilsonMatrix::Construct(gmug5, gmug5, COLOR_STRUCTURE_MIXED);
     }
 
-    const vector<DoubleWilsonMatrix> tests { ggdiag, ggmixed, g5g5diag, g5g5mixed, qqdiag, qqmixed, q5q5diag, q5q5mixed };
-    const vector<const char*> test_names { "ggdiag", "ggmixed", "g5g5diag", "g5g5mixed", "qqdiag", "qqmixed", "q5q5diag", "q5q5mixed" };
+	DoubleWilsonMatrix TTdiag;
+	for(int mu = 0; mu < 4; mu++){
+	for(int nu = 0; nu < 4; nu++){
+		SpinMatrix T = SpinMatrix::Sigma(mu, nu);
+		TTdiag += DoubleWilsonMatrix::Construct(T, T, COLOR_STRUCTURE_DIAGONAL);
+	}}
 
-    for (int p = 0; p < 4; ++p) {
+    const vector<DoubleWilsonMatrix> tests { ggdiag, ggmixed, g5g5diag, g5g5mixed, qqdiag, qqmixed, q5q5diag, q5q5mixed, TTdiag };
+    const vector<const char*> test_names { "ggdiag", "ggmixed", "g5g5diag", "g5g5mixed", "qqdiag", "qqmixed", "q5q5diag", "q5q5mixed", "TTdiag" };
+
+    for (int p = 0; p < 5; ++p) {
         printf("basic projector %s:\n", basic_P_names[p]);
-        DoubleWilsonMatrix proj = basic_Ps[p];
-        for (int t = 0; t < 8; ++t) {
-            complex<double> result =basic_Ps[p].Project(tests[t]);
-            printf("  on test state %s = %f + i %f\n", test_names[t], result.real(), result.imag());
+        // DoubleWilsonMatrix proj = basic_Ps[p];
+        DoubleWilsonMatrix proj = build_BK_gammaMu_pscs(POSITIVE_PARITY)[p];
+        // DoubleWilsonMatrix proj = build_BK_Qslash_pscs(q, qsq, POSITIVE_PARITY)[p];
+        for (int t = 0; t < 9; ++t) {
+            complex<double> result =proj.Project(tests[t]);
+            printf("  on test state %s = \t %f + i %f\n", test_names[t], result.real(), result.imag());
         }
         printf("\n");
     }
@@ -305,12 +315,18 @@ BK_pscs build_BK_gammaMu_pscs(Parity parity) // assuming postive parity
     // The spin - color structure for the seven projectors used in the DeltaS = 1 NPR
     // These are defined in https://rbc.phys.columbia.edu/rbc_ukqcd/individual_postings/qliu/2011/k2pipiNPR/k2pipiNPR_2.pdf
     BK_pscs projectors;
-    projectors[0] =  (1./3072.) * ( VV_diag + AA_diag );
-    projectors[1] =  (1./2304.) * ( VV_diag - AA_diag );
-    projectors[2] = (1./576.) * ( SS_diag - PP_diag );
-    projectors[3] = (1./480.) * ( SS_diag + PP_diag );
-    projectors[4] = (1./2016.) * ( TT_diag );
-    return projectors;
+//    projectors[0] =  (1./3072.) * ( VV_diag + AA_diag );
+//    projectors[1] =  (1./2304.) * ( VV_diag - AA_diag );
+//    projectors[2] = (1./576.) * ( SS_diag - PP_diag );
+//    projectors[3] = (1./480.) * ( SS_diag + PP_diag );
+//    projectors[4] = (1./2016.) * ( TT_diag );
+    projectors[0] = VV_diag + AA_diag;
+    projectors[1] = VV_diag - AA_diag;
+    projectors[2] = SS_diag - PP_diag;
+    projectors[3] = SS_diag + PP_diag;
+    projectors[4] = TT_diag;
+
+	return projectors;
 }
 
 BK_pscs build_BK_Qslash_pscs(const double q[4], double qsq, Parity parity) // assuming postive parity
@@ -320,10 +336,16 @@ BK_pscs build_BK_Qslash_pscs(const double q[4], double qsq, Parity parity) // as
     // The spin - color structure for the seven projectors used in the DeltaS = 1 NPR
     // These are defined in https://rbc.phys.columbia.edu/rbc_ukqcd/individual_postings/qliu/2011/k2pipiNPR/k2pipiNPR_2.pdf
     BK_pscs projectors;
-    projectors[0] = (1./768.) * BuildQslashProjector(q, qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, parity); 		 
-    projectors[1] = (1./576.) * BuildQslashProjector(q, qsq, -1.0, COLOR_STRUCTURE_DIAGONAL, parity); 		 
-    projectors[2] = (-1./288.) * BuildQslashProjector(q, qsq, -1.0, COLOR_STRUCTURE_MIXED, parity); 			 
-    projectors[3] = (1./72.) * build_qslash_projector_sigma(q, qsq, +1.0, COLOR_STRUCTURE_MIXED, parity); 	 
-    projectors[4] = (1./168.) * build_qslash_projector_sigma(q, qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, parity); 
-    return projectors;
+//    projectors[0] = (1./768.) * BuildQslashProjector(q, qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, parity); 		 
+//    projectors[1] = (1./576.) * BuildQslashProjector(q, qsq, -1.0, COLOR_STRUCTURE_DIAGONAL, parity); 		 
+//    projectors[2] = (-1./288.) * BuildQslashProjector(q, qsq, -1.0, COLOR_STRUCTURE_MIXED, parity); 			 
+//    projectors[3] = (1./72.) * build_qslash_projector_sigma(q, qsq, +1.0, COLOR_STRUCTURE_MIXED, parity); 	 
+//    projectors[4] = (1./168.) * build_qslash_projector_sigma(q, qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, parity); 
+    projectors[0] = BuildQslashProjector(q, qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, parity); 		 
+    projectors[1] = BuildQslashProjector(q, qsq, -1.0, COLOR_STRUCTURE_DIAGONAL, parity); 		 
+    projectors[2] = BuildQslashProjector(q, qsq, -1.0, COLOR_STRUCTURE_MIXED, parity); 			 
+    projectors[3] = build_qslash_projector_sigma(q, qsq, +1.0, COLOR_STRUCTURE_MIXED, parity); 	 
+    projectors[4] = build_qslash_projector_sigma(q, qsq, +1.0, COLOR_STRUCTURE_DIAGONAL, parity);    
+	
+	return projectors;
 }

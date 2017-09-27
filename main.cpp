@@ -94,6 +94,35 @@ void run_BK_24ID()
 
 }
 
+void run_DSeq2_24ID()
+{
+    NPRSettings sett;
+    //const char* dir = "/home/gregm/fitting/NPR/G1_NPR/data/16x32x16_b2.13_ms0.032_ml0.01/justG1_NPR_mass0.0100";
+    sett.dir = "../data/24x64x24ID/DSeq2_mass0.0011";
+//	sett.dir = "../data/greg_test_24I";
+    //sett.sub_dir = "/home/gregm/fitting/NPR/G1_NPR/data/16x32x16_b2.13_ms0.032_ml0.01/c1_0.0_justG1_NPR_mass0.0100";
+    sett.sub_dir = sett.dir;
+    sett.c1_str = "";
+    for (int conf = 300; conf <= 316; conf += 4) sett.confs.push_back(conf);
+    sett.mom1 = {{ 0, 2, 2, 0 }}; 
+    sett.mom2 = {{ 2, 2, 0, 0}};
+    sett.cont_mom1 = {{ -3., 0., 3., 0. }}; 
+    sett.cont_mom2 = {{ 0., 3., 3., 0. }}; 
+    sett.Ls = {{ 24, 24, 24, 64 }};
+    sett.parity = POSITIVE_PARITY;
+    sett.scheme = SchemeGammaMu;
+    sett.do_disconnected = true;
+    sett.do_subtractions = true;
+    sett.enforce_reality = true;
+    sett.bin_size = 1;
+	
+    npr_DSeq2(sett, NULL);
+	
+	sett.scheme = SchemeQslash;
+
+    npr_DSeq2(sett, NULL);
+
+}
 int main()
 {
     //RunAllTests();
@@ -117,7 +146,9 @@ int main()
     //DoStepScaling_24_32(SchemeGammaMu, SchemeGammaMu, NEGATIVE_PARITY);
     //DoStepScaling_24_32(SchemeQslash, SchemeQslash, NEGATIVE_PARITY);
 
-	run_BK_24ID();
+	TestQslashProjectors();
+
+	run_DSeq2_24ID();
 
     return 0;
 }

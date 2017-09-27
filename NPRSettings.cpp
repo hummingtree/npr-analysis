@@ -36,3 +36,19 @@ const Matrix<std::complex<double>, 8> NPRSettings::tree_level_greens_funcs_8x8_q
         {{{   0,     0,     0,   0,   0,  96, 288,   0 }}},
         {{{   0,     0,     0,   0,   0,   0,   0, 768 }}}
 }}};
+
+const Matrix<std::complex<double>, 5> NPRSettings::tree_level_greens_funcs_DSeq2_5x5_GammaMu = {{{
+        {{{ 3072, 0, 0, 0, 0	}}},
+        {{{ 0, 2304, -384, 0, 0	}}},
+        {{{ 0, -384, 576, 0, 0	}}},
+        {{{ 0, 0, 0, 480, 288	}}},
+        {{{ 0, 0, 0, 288, 2016	}}},
+}}};
+
+const Matrix<std::complex<double>, 5> NPRSettings::tree_level_greens_funcs_DSeq2_5x5_Qslash = {{{
+        {{{ 768, 0, 0, 0, 0		}}},
+        {{{ 0, 576, 192, 0, 0	}}},
+        {{{ 0, -96, -288, 0, 0	}}},
+        {{{ 0, 0, 0, 72, 24		}}},
+        {{{ 0, 0, 0, 120, 168	}}},
+}}};

@@ -12,4 +12,6 @@ struct NPRResults
 
 void npr_BK(NPRSettings &sett, char* BK_lat_src);
 
+void npr_DSeq2(NPRSettings &sett, char* BK_lat_src);
+
 #endif
